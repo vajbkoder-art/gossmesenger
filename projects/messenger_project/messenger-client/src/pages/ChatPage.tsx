@@ -185,7 +185,22 @@ export default function ChatPage() {
     });
   }, [user, socket, chats, users]);
 
-  const currentChat = chats.find(c => c.username === activeChat);
+  const currentChat = chats.find(c => c.username === activeChat) || (() => {
+    if (!activeChat || !users[activeChat]) return undefined;
+    const peer = users[activeChat];
+    return {
+      id: `new_${activeChat}`,
+      name: peer.name || activeChat,
+      username: activeChat,
+      avatar: peer.avatar || activeChat[0]?.toUpperCase() || '?',
+      time: '',
+      timestamp: 0,
+      lastMessage: '',
+      unread: 0,
+      status: 'offline',
+      messages: [],
+    } as Chat;
+  })();
 
   // Mark messages as read when opening a chat
   useEffect(() => {
