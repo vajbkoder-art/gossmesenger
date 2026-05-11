@@ -31,17 +31,18 @@ export function sendPushNotification(username, payload) {
   // Web Push
   const subs = db.pushSubscriptions?.[username];
   if (Array.isArray(subs) && subs.length > 0) {
-    let shouldClean = false;
     const promises = subs.map(sub =>
-      webpush.sendNotification(sub, JSON.stringify(payload)).catch(err => {
+      webpush.sendNotification(sub, JSON.stringify(payload)).then(() => sub).catch(err => {
         if (err.statusCode === 410 || err.statusCode === 404) {
-          shouldClean = true;
+          return null;
         }
+        return sub;
       })
     );
-    Promise.all(promises).then(() => {
-      if (shouldClean) {
-        db.pushSubscriptions[username] = subs.filter(Boolean);
+    Promise.all(promises).then((results) => {
+      const valid = results.filter(Boolean);
+      if (valid.length < subs.length) {
+        db.pushSubscriptions[username] = valid;
         saveDB();
       }
     });

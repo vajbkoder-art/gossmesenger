@@ -12,6 +12,7 @@ const router = express.Router();
 const adminTokens = new Map();
 
 function getSuperAdminHash() {
+  if (db.superAdminPasswordHash) return db.superAdminPasswordHash;
   if (!db._superAdminHash || db._superAdminHashSrc !== ADMIN_PASSWORD) {
     db._superAdminHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
     db._superAdminHashSrc = ADMIN_PASSWORD;
@@ -345,6 +346,8 @@ router.post('/change-password', requireAdmin, async (req, res) => {
     const ok = await bcrypt.compare(oldPassword, getSuperAdminHash());
     if (!ok) return res.status(403).json({ error: 'Старый пароль неверный' });
     db.superAdminPasswordHash = await bcrypt.hash(newPassword, 10);
+    delete db._superAdminHash;
+    delete db._superAdminHashSrc;
     saveDB();
     logActivity('change_password', { role: 'superadmin' });
     return res.json({ success: true });
