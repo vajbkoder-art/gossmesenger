@@ -3,6 +3,7 @@ import { ADMIN_LOGIN, ADMIN_PASSWORD, MANAGER_ROLES } from './config.js';
 import { db } from './db.js';
 
 function getSuperAdminHash() {
+  if (db.superAdminPasswordHash) return db.superAdminPasswordHash;
   if (!db._superAdminHash || db._superAdminHashSrc !== ADMIN_PASSWORD) {
     db._superAdminHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
     db._superAdminHashSrc = ADMIN_PASSWORD;
