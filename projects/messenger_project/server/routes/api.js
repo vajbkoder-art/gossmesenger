@@ -90,7 +90,8 @@ router.get('/api/limits', (req, res) => {
 router.post('/api/push/fcm-token', (req, res) => {
   const { username, token } = req.body;
   if (!username || !token) return res.status(400).json({ error: 'Missing username or token' });
-  db.fcmTokens[username] = token;
+  if (!db.fcmTokens[username]) db.fcmTokens[username] = [];
+  if (!db.fcmTokens[username].includes(token)) db.fcmTokens[username].push(token);
   saveDB();
   res.status(200).json({ success: true });
 });
@@ -270,10 +271,23 @@ router.put('/api/users/:username', (req, res) => {
   const { username } = req.params;
   if (!db.users[username]) return res.status(404).json({ error: 'User not found' });
 
+  const authUser = req.headers['x-user-login'];
+  const authPass = req.headers['x-user-password'];
+  const adminToken = req.headers['x-admin-token'];
+  const isAdmin = adminToken && adminTokens.has(adminToken);
+  const isSelf = authUser === username && authPass && db.users[authUser] &&
+    bcrypt.compareSync(authPass, db.users[authUser].password);
+  if (!isAdmin && !isSelf) return res.status(401).json({ error: 'Auth required' });
+
   const update = { ...req.body };
   if (SERVICE_AVATARS[db.users[username].role]) delete update.avatar;
   const safeUpdate = { ...update };
   delete safeUpdate.password;
+  if (!isAdmin) {
+    delete safeUpdate.role;
+    delete safeUpdate.banned;
+    delete safeUpdate.officeId;
+  }
   db.users[username] = { ...db.users[username], ...safeUpdate };
   saveDB();
   req.io.emit('users_updated', sanitizeUsers(db.users));
@@ -283,6 +297,9 @@ router.put('/api/users/:username', (req, res) => {
 router.delete('/api/users/:username', (req, res) => {
   const { username } = req.params;
   if (!db.users[username]) return res.status(404).json({ error: 'User not found' });
+
+  const adminToken = req.headers['x-admin-token'];
+  if (!adminToken || !adminTokens.has(adminToken)) return res.status(401).json({ error: 'Admin auth required' });
 
   delete db.users[username];
   delete db.chats[username];
@@ -345,6 +362,14 @@ router.get('/api/chats/:username', (req, res) => {
 
 router.post('/api/chats/:username', (req, res) => {
   const { username } = req.params;
+  const authUser = req.headers['x-user-login'];
+  const authPass = req.headers['x-user-password'];
+  const adminToken = req.headers['x-admin-token'];
+  const isAdmin = adminToken && adminTokens.has(adminToken);
+  const isSelf = authUser === username && authPass && db.users[authUser] &&
+    bcrypt.compareSync(authPass, db.users[authUser].password);
+  if (!isAdmin && !isSelf) return res.status(401).json({ error: 'Auth required' });
+
   db.chats[username] = req.body;
   saveDB();
   res.json({ success: true });
