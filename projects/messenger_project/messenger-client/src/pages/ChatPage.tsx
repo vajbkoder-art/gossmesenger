@@ -54,8 +54,8 @@ export default function ChatPage() {
   // Load groups via socket
   useEffect(() => {
     if (!socket || !user) return;
-    socket.emit('get_groups', { username: user.username }, (response: { ok: boolean; groups?: GroupChat[] }) => {
-      if (response.ok && response.groups) setGroups(response.groups);
+    socket.emit('get_groups', { username: user.username }, (response: GroupChat[]) => {
+      if (Array.isArray(response)) setGroups(response);
     });
   }, [socket, user]);
 
@@ -134,16 +134,27 @@ export default function ChatPage() {
       }));
     };
 
-    const onGroupUpdated = (data: { group: GroupChat }) => {
+    const onGroupUpdated = (group: GroupChat) => {
       setGroups(prev => {
-        const idx = prev.findIndex(g => g.id === data.group.id);
+        const idx = prev.findIndex(g => g.id === group.id);
         if (idx >= 0) {
           const updated = [...prev];
-          updated[idx] = data.group;
+          updated[idx] = group;
           return updated;
         }
-        return [...prev, data.group];
+        return [...prev, group];
       });
+    };
+
+    const onGroupCreated = (group: GroupChat) => {
+      setGroups(prev => {
+        if (prev.some(g => g.id === group.id)) return prev;
+        return [...prev, group];
+      });
+    };
+
+    const onGroupRemoved = (data: { groupId: string }) => {
+      setGroups(prev => prev.filter(g => g.id !== data.groupId));
     };
 
     const onForceLogout = (data: { reason: string }) => {
@@ -158,8 +169,10 @@ export default function ChatPage() {
     socket.on('message_edited', onMessageEdited);
     socket.on('message_pinned', onMessagePinned);
     socket.on('message_deleted', onMessageDeleted);
-    socket.on('group_message', onGroupMessage);
+    socket.on('receive_group_message', onGroupMessage);
     socket.on('group_updated', onGroupUpdated);
+    socket.on('group_created', onGroupCreated);
+    socket.on('group_removed', onGroupRemoved);
     socket.on('force_logout', onForceLogout);
 
     return () => {
@@ -170,8 +183,10 @@ export default function ChatPage() {
       socket.off('message_edited', onMessageEdited);
       socket.off('message_pinned', onMessagePinned);
       socket.off('message_deleted', onMessageDeleted);
-      socket.off('group_message', onGroupMessage);
+      socket.off('receive_group_message', onGroupMessage);
       socket.off('group_updated', onGroupUpdated);
+      socket.off('group_created', onGroupCreated);
+      socket.off('group_removed', onGroupRemoved);
       socket.off('force_logout', onForceLogout);
     };
   }, [socket, user, logout]);
@@ -296,7 +311,7 @@ export default function ChatPage() {
   // Delete messages
   const handleDeleteMessages = useCallback((messageIds: number[], forBoth: boolean) => {
     if (!socket || !user || !activeChat) return;
-    socket.emit('delete_message', {
+    socket.emit('delete_messages', {
       senderUsername: user.username,
       recipientUsername: activeChat,
       messageIds,
@@ -321,7 +336,8 @@ export default function ChatPage() {
     socket.emit('forward_message', {
       senderUsername: user.username,
       recipientUsername,
-      originalMessage: forwardMessage,
+      message: forwardMessage,
+      originalSender: forwardMessage.senderUsername || (forwardMessage.sender === 'me' ? user.username : recipientUsername),
     });
     setForwardMessage(null);
   }, [socket, user, forwardMessage]);
@@ -354,12 +370,6 @@ export default function ChatPage() {
       creatorUsername: user.username,
       memberUsernames: members,
       avatar,
-    }, (response: { ok: boolean; group?: GroupChat }) => {
-      if (response.ok && response.group) {
-        setGroups(prev => [...prev, response.group!]);
-        setActiveGroup(response.group.id);
-        setActiveChat(null);
-      }
     });
     setShowCreateGroup(false);
   }, [socket, user]);
@@ -385,7 +395,13 @@ export default function ChatPage() {
       duration: attachment?.duration,
       replyTo: replyTo || undefined,
     };
-    socket.emit('send_group_message', { groupId: activeGroup, message: msg });
+    socket.emit('send_group_message', {
+      groupId: activeGroup,
+      senderUsername: user.username,
+      text: text.trim(),
+      attachment: attachment || undefined,
+      replyTo: replyTo || undefined,
+    });
     setGroups(prev => prev.map(g => {
       if (g.id !== activeGroup) return g;
       return { ...g, messages: [...g.messages, msg] };
@@ -400,17 +416,17 @@ export default function ChatPage() {
 
   const handleAddGroupMember = useCallback((username: string) => {
     if (!socket || !user || !activeGroup) return;
-    socket.emit('add_group_member', { groupId: activeGroup, adminUsername: user.username, memberUsername: username });
+    socket.emit('add_group_member', { groupId: activeGroup, adderUsername: user.username, targetUsername: username });
   }, [socket, user, activeGroup]);
 
   const handleRemoveGroupMember = useCallback((username: string) => {
     if (!socket || !user || !activeGroup) return;
-    socket.emit('remove_group_member', { groupId: activeGroup, adminUsername: user.username, memberUsername: username });
+    socket.emit('remove_group_member', { groupId: activeGroup, removerUsername: user.username, targetUsername: username });
   }, [socket, user, activeGroup]);
 
   const handleSetGroupAdmin = useCallback((username: string, isAdmin: boolean) => {
     if (!socket || !user || !activeGroup) return;
-    socket.emit('set_group_admin', { groupId: activeGroup, adminUsername: user.username, memberUsername: username, isAdmin });
+    socket.emit('set_group_admin', { groupId: activeGroup, setterUsername: user.username, targetUsername: username, isAdmin });
   }, [socket, user, activeGroup]);
 
   const handleLeaveGroup = useCallback(() => {
