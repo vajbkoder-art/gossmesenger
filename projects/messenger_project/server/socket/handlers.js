@@ -872,7 +872,9 @@ export function setupSocketHandlers(io) {
       group.messages.push(message);
       saveDB();
       for (const u of group.members) {
-        io.to(`user_${u}`).emit('receive_group_message', { groupId, message });
+        if (u !== senderUsername) {
+          io.to(`user_${u}`).emit('receive_group_message', { groupId, message });
+        }
       }
 
       const senderName = sender.name || senderUsername;

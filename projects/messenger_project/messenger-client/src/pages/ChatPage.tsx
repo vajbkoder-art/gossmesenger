@@ -130,6 +130,7 @@ export default function ChatPage() {
     const onGroupMessage = (data: { groupId: string; message: GroupMessage }) => {
       setGroups(prev => prev.map(g => {
         if (g.id !== data.groupId) return g;
+        if (g.messages.some(m => m.id === data.message.id)) return g;
         return { ...g, messages: [...g.messages, data.message] };
       }));
     };
