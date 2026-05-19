@@ -686,6 +686,287 @@ export function setupSocketHandlers(io) {
       } catch (e) { cb?.({ error: String(e.message || e) }); }
     });
 
+    // === Edit message ===
+    socket.on('edit_message', ({ senderUsername, recipientUsername, messageId, newText }) => {
+      if (!senderUsername || !recipientUsername || !messageId || !newText) return;
+      const editedAt = Date.now();
+
+      const updateChat = (owner, peer) => {
+        const chats = db.chats[owner] || [];
+        const chat = chats.find(c => c.username === peer);
+        if (!chat?.messages) return;
+        const msg = chat.messages.find(m => m.id === messageId);
+        if (msg) {
+          msg.text = newText;
+          msg.editedAt = editedAt;
+          if (msg.text === chat.lastMessage || chat.messages[chat.messages.length - 1]?.id === messageId) {
+            chat.lastMessage = newText;
+          }
+        }
+        io.to(`user_${owner}`).emit('receive_chats', chats);
+      };
+
+      updateChat(senderUsername, recipientUsername);
+      updateChat(recipientUsername, senderUsername);
+      saveDB();
+
+      io.to(`user_${senderUsername}`).emit('message_edited', { chatUsername: recipientUsername, messageId, newText, editedAt });
+      io.to(`user_${recipientUsername}`).emit('message_edited', { chatUsername: senderUsername, messageId, newText, editedAt });
+    });
+
+    // === Pin/unpin message ===
+    socket.on('pin_message', ({ senderUsername, recipientUsername, messageId, pinned }) => {
+      if (!senderUsername || !recipientUsername || !messageId) return;
+
+      const updateChat = (owner, peer) => {
+        const chats = db.chats[owner] || [];
+        const chat = chats.find(c => c.username === peer);
+        if (!chat?.messages) return;
+        const msg = chat.messages.find(m => m.id === messageId);
+        if (msg) msg.pinned = !!pinned;
+        io.to(`user_${owner}`).emit('receive_chats', chats);
+      };
+
+      updateChat(senderUsername, recipientUsername);
+      updateChat(recipientUsername, senderUsername);
+      saveDB();
+
+      io.to(`user_${senderUsername}`).emit('message_pinned', { chatUsername: recipientUsername, messageId, pinned: !!pinned });
+      io.to(`user_${recipientUsername}`).emit('message_pinned', { chatUsername: senderUsername, messageId, pinned: !!pinned });
+    });
+
+    // === Forward message ===
+    socket.on('forward_message', ({ senderUsername, recipientUsername, message, originalSender }) => {
+      if (!senderUsername || !recipientUsername || !message) return;
+      const sender = db.users[senderUsername];
+      if (!sender) return;
+      if (sender.banned) { socket.emit('force_logout', { reason: 'Ваш аккаунт заблокирован' }); return; }
+
+      const recipient = db.users[recipientUsername];
+      if (sender && recipient && (sender.officeId || null) !== (recipient.officeId || null)) {
+        socket.emit('message_error', { error: 'Нельзя пересылать сообщения пользователям из другого офиса' });
+        return;
+      }
+
+      const nowMs = Date.now();
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+      const msgId = nowMs;
+
+      const fwdMsg = {
+        id: msgId, text: message.text || '', time: timeStr, timestamp: nowMs,
+        type: message.type || 'text', forwarded: true, forwardedFrom: originalSender || '',
+        status: 'sent',
+      };
+      if (message.url) fwdMsg.url = message.url;
+      if (message.filename) fwdMsg.filename = message.filename;
+      if (message.size != null) fwdMsg.size = message.size;
+      if (message.mimeType) fwdMsg.mimeType = message.mimeType;
+      if (message.duration != null) fwdMsg.duration = message.duration;
+
+      const ensureChat = (owner, peer) => {
+        if (!db.chats[owner]) db.chats[owner] = [];
+        let chat = db.chats[owner].find(c => c.username === peer);
+        if (!chat) {
+          const peerUser = db.users[peer] || {};
+          chat = {
+            id: `chat_${nowMs}_${Math.random().toString(36).slice(2)}`,
+            name: peerUser.name || peer, username: peer,
+            avatar: peerUser.avatar || '', time: '', lastMessage: '',
+            unread: 0, status: 'offline', messages: [],
+          };
+          db.chats[owner].push(chat);
+        }
+        return chat;
+      };
+
+      const senderChat = ensureChat(senderUsername, recipientUsername);
+      senderChat.messages.push({ ...fwdMsg, sender: 'me' });
+      senderChat.lastMessage = fwdMsg.text || (fwdMsg.type === 'image' ? 'Фотография' : 'Файл');
+      senderChat.time = timeStr;
+      senderChat.timestamp = nowMs;
+      db.chats[senderUsername] = [senderChat, ...db.chats[senderUsername].filter(c => c.username !== recipientUsername)];
+
+      const recipientChat = ensureChat(recipientUsername, senderUsername);
+      recipientChat.messages.push({ ...fwdMsg, id: msgId + 1, sender: 'them' });
+      recipientChat.lastMessage = fwdMsg.text || (fwdMsg.type === 'image' ? 'Фотография' : 'Файл');
+      recipientChat.time = timeStr;
+      recipientChat.timestamp = nowMs;
+      recipientChat.unread = (recipientChat.unread || 0) + 1;
+      db.chats[recipientUsername] = [recipientChat, ...db.chats[recipientUsername].filter(c => c.username !== senderUsername)];
+
+      io.to(`user_${senderUsername}`).emit('receive_chats', db.chats[senderUsername]);
+      io.to(`user_${recipientUsername}`).emit('receive_chats', db.chats[recipientUsername]);
+
+      const senderName = sender.name || senderUsername;
+      sendPushNotification(recipientUsername, {
+        type: 'message', title: senderName,
+        body: `Пересланное сообщение: ${fwdMsg.text || 'файл'}`,
+      });
+      saveDB();
+    });
+
+    // === Group chats ===
+    socket.on('create_group', ({ name, creatorUsername, memberUsernames, avatar }) => {
+      const creator = db.users[creatorUsername];
+      if (!creator) return;
+      if (creator.banned) { socket.emit('force_logout', { reason: 'Ваш аккаунт заблокирован' }); return; }
+
+      const nowMs = Date.now();
+      const groupId = `group_${nowMs}`;
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+      const validMembers = (memberUsernames || []).filter(u => {
+        const target = db.users[u];
+        if (!target || target.banned) return false;
+        if ((target.officeId || null) !== (creator.officeId || null)) return false;
+        return u !== creatorUsername;
+      });
+
+      if (!db.groups) db.groups = {};
+      const group = {
+        id: groupId, name: name || 'Группа', avatar: avatar || null,
+        creator: creatorUsername, admins: [creatorUsername],
+        members: [creatorUsername, ...validMembers], pending: [],
+        messages: [{
+          id: nowMs, text: `${creator.name || creatorUsername} создал группу`,
+          senderUsername: null, time: timeStr, timestamp: nowMs, type: 'system',
+        }],
+        createdAt: new Date().toISOString(), pinnedMessages: [],
+      };
+      db.groups[groupId] = group;
+      saveDB();
+
+      for (const u of group.members) {
+        io.to(`user_${u}`).emit('group_created', group);
+      }
+    });
+
+    socket.on('get_groups', ({ username }, cb) => {
+      if (!db.groups) db.groups = {};
+      const groups = Object.values(db.groups).filter(g => g.members.includes(username));
+      cb?.(groups);
+    });
+
+    socket.on('send_group_message', ({ groupId, senderUsername, text, attachment, replyTo }) => {
+      if (!db.groups) db.groups = {};
+      const group = db.groups[groupId];
+      if (!group || !group.members.includes(senderUsername)) return;
+      const sender = db.users[senderUsername];
+      if (!sender) return;
+      if (sender.banned) { socket.emit('force_logout', { reason: 'Ваш аккаунт заблокирован' }); return; }
+
+      const nowMs = Date.now();
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+      const message = {
+        id: nowMs, text: text || '', senderUsername, senderName: sender.name || senderUsername,
+        time: timeStr, timestamp: nowMs, type: attachment?.type || 'text',
+      };
+      if (replyTo) message.replyTo = replyTo;
+      if (attachment) {
+        if (attachment.url) message.url = attachment.url;
+        if (attachment.filename) message.filename = attachment.filename;
+        if (attachment.size != null) message.size = attachment.size;
+        if (attachment.mimeType) message.mimeType = attachment.mimeType;
+        if (attachment.duration != null) message.duration = attachment.duration;
+      }
+      group.messages.push(message);
+      saveDB();
+      for (const u of group.members) {
+        io.to(`user_${u}`).emit('receive_group_message', { groupId, message });
+      }
+
+      const senderName = sender.name || senderUsername;
+      for (const u of group.members) {
+        if (u !== senderUsername) {
+          sendPushNotification(u, { type: 'message', title: `${group.name}: ${senderName}`, body: text || 'Медиа' });
+        }
+      }
+    });
+
+    socket.on('update_group', ({ groupId, username, name, avatar }) => {
+      if (!db.groups) return;
+      const group = db.groups[groupId];
+      if (!group) return;
+      if (!group.admins.includes(username) && group.creator !== username) {
+        socket.emit('group_error', { error: 'Только админ может изменять группу' }); return;
+      }
+      if (name) group.name = name;
+      if (avatar !== undefined) group.avatar = avatar;
+      saveDB();
+      for (const u of group.members) io.to(`user_${u}`).emit('group_updated', group);
+    });
+
+    socket.on('add_group_member', ({ groupId, adderUsername, targetUsername }) => {
+      if (!db.groups) return;
+      const group = db.groups[groupId];
+      if (!group) return;
+      if (!group.admins.includes(adderUsername) && group.creator !== adderUsername) {
+        socket.emit('group_error', { error: 'Только админ может добавлять участников' }); return;
+      }
+      const target = db.users[targetUsername];
+      if (!target) { socket.emit('group_error', { error: 'Пользователь не найден' }); return; }
+      if (group.members.includes(targetUsername)) { socket.emit('group_error', { error: 'Пользователь уже в группе' }); return; }
+      group.members.push(targetUsername);
+      const nowMs = Date.now();
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      group.messages.push({ id: nowMs, text: `${target.name || targetUsername} добавлен в группу`, senderUsername: null, time: timeStr, timestamp: nowMs, type: 'system' });
+      saveDB();
+      for (const u of group.members) io.to(`user_${u}`).emit('group_updated', group);
+    });
+
+    socket.on('remove_group_member', ({ groupId, removerUsername, targetUsername }) => {
+      if (!db.groups) return;
+      const group = db.groups[groupId];
+      if (!group) return;
+      if (!group.admins.includes(removerUsername) && group.creator !== removerUsername) {
+        socket.emit('group_error', { error: 'Только админ может удалять участников' }); return;
+      }
+      if (targetUsername === group.creator) { socket.emit('group_error', { error: 'Нельзя удалить создателя' }); return; }
+      group.members = group.members.filter(u => u !== targetUsername);
+      group.admins = group.admins.filter(u => u !== targetUsername);
+      const nowMs = Date.now();
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      const target = db.users[targetUsername];
+      group.messages.push({ id: nowMs, text: `${target?.name || targetUsername} удалён из группы`, senderUsername: null, time: timeStr, timestamp: nowMs, type: 'system' });
+      saveDB();
+      io.to(`user_${targetUsername}`).emit('group_removed', { groupId });
+      for (const u of group.members) io.to(`user_${u}`).emit('group_updated', group);
+    });
+
+    socket.on('set_group_admin', ({ groupId, setterUsername, targetUsername, isAdmin }) => {
+      if (!db.groups) return;
+      const group = db.groups[groupId];
+      if (!group) return;
+      if (group.creator !== setterUsername) { socket.emit('group_error', { error: 'Только создатель может назначать админов' }); return; }
+      if (!group.members.includes(targetUsername)) return;
+      if (isAdmin && !group.admins.includes(targetUsername)) group.admins.push(targetUsername);
+      if (!isAdmin) group.admins = group.admins.filter(u => u !== targetUsername);
+      saveDB();
+      for (const u of group.members) io.to(`user_${u}`).emit('group_updated', group);
+    });
+
+    socket.on('leave_group', ({ groupId, username }) => {
+      if (!db.groups) return;
+      const group = db.groups[groupId];
+      if (!group || !group.members.includes(username)) return;
+      group.members = group.members.filter(u => u !== username);
+      group.admins = group.admins.filter(u => u !== username);
+      const nowMs = Date.now();
+      const timeStr = new Date(nowMs).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      const user = db.users[username];
+      group.messages.push({ id: nowMs, text: `${user?.name || username} покинул группу`, senderUsername: null, time: timeStr, timestamp: nowMs, type: 'system' });
+      if (group.members.length === 0) { delete db.groups[groupId]; }
+      else {
+        if (group.creator === username && group.members.length > 0) {
+          group.creator = group.members[0];
+          if (!group.admins.includes(group.members[0])) group.admins.push(group.members[0]);
+        }
+      }
+      saveDB();
+      io.to(`user_${username}`).emit('group_removed', { groupId });
+      for (const u of (group.members || [])) io.to(`user_${u}`).emit('group_updated', group);
+    });
+
     // === Renegotiation & misc ===
     socket.on('renegotiate', (data) => {
       io.to(`user_${data.to}`).emit('renegotiate_offer', { signalData: data.signalData, from: data.from });

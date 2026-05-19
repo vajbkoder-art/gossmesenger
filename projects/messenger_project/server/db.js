@@ -12,6 +12,7 @@ let db = {
   chats: {},
   offices: {},
   conferences: {},
+  groups: {},
   pushSubscriptions: {},
   fcmTokens: {},
 };
@@ -30,6 +31,7 @@ try {
 // Ensure required collections
 if (!db.offices) db.offices = {};
 if (!db.conferences) db.conferences = {};
+if (!db.groups) db.groups = {};
 if (!db.pushSubscriptions) db.pushSubscriptions = {};
 if (!db.fcmTokens) db.fcmTokens = {};
 

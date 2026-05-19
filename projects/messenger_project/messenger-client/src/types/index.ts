@@ -11,18 +11,38 @@ export interface User {
   banned?: boolean;
 }
 
+export interface ReplyTo {
+  id: number;
+  text: string;
+  sender: 'me' | 'them';
+  senderUsername?: string;
+  senderName?: string;
+  type?: string;
+  filename?: string;
+}
+
 export interface Message {
   id: number;
   text: string;
   sender: 'me' | 'them';
   time: string;
   timestamp: number;
-  type?: 'text' | 'image' | 'file' | 'system' | 'voice';
+  type?: 'text' | 'image' | 'file' | 'system' | 'voice' | 'video' | 'video_circle';
   status?: 'sending' | 'sent' | 'delivered' | 'read';
   url?: string;
   filename?: string;
   size?: number;
   mimeType?: string;
+  duration?: number;
+  width?: number;
+  height?: number;
+  replyTo?: ReplyTo;
+  editedAt?: number;
+  forwarded?: boolean;
+  forwardedFrom?: string;
+  pinned?: boolean;
+  senderUsername?: string;
+  senderName?: string;
 }
 
 export interface Chat {
@@ -36,6 +56,43 @@ export interface Chat {
   unread: number;
   status: string;
   messages: Message[];
+  isGroup?: boolean;
+  pinnedMessages?: number[];
+}
+
+export interface GroupChat {
+  id: string;
+  name: string;
+  avatar: string | null;
+  creator: string;
+  admins: string[];
+  members: string[];
+  pending: string[];
+  messages: GroupMessage[];
+  createdAt: string;
+  pinnedMessages?: number[];
+}
+
+export interface GroupMessage {
+  id: number;
+  text: string;
+  senderUsername: string | null;
+  senderName?: string;
+  time: string;
+  timestamp: number;
+  type: string;
+  url?: string;
+  filename?: string;
+  size?: number;
+  mimeType?: string;
+  duration?: number;
+  width?: number;
+  height?: number;
+  replyTo?: ReplyTo;
+  editedAt?: number;
+  forwarded?: boolean;
+  forwardedFrom?: string;
+  pinned?: boolean;
 }
 
 export interface Conference {
