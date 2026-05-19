@@ -55,7 +55,7 @@ export default function CreateGroupDialog({ users, currentUser, onCreateGroup, o
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-500" />
             <h3 className="text-lg font-semibold">
-              {step === 'members' ? '\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0433\u0440\u0443\u043f\u043f\u0443' : '\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0433\u0440\u0443\u043f\u043f\u044b'}
+              {step === 'members' ? 'Создать группу' : 'Настройки группы'}
             </h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
@@ -66,7 +66,7 @@ export default function CreateGroupDialog({ users, currentUser, onCreateGroup, o
             <div className="p-3 border-b">
               <div className="relative">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'\u041f\u043e\u0438\u0441\u043a...'} autoFocus className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={'Поиск...'} autoFocus className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               {selected.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -95,7 +95,7 @@ export default function CreateGroupDialog({ users, currentUser, onCreateGroup, o
             </div>
             <div className="p-4 border-t">
               <button onClick={() => setStep('details')} disabled={selected.length === 0} className="w-full py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">
-                {'\u0414\u0430\u043b\u0435\u0435'} ({selected.length})
+                {'Далее'} ({selected.length})
               </button>
             </div>
           </>
@@ -105,8 +105,8 @@ export default function CreateGroupDialog({ users, currentUser, onCreateGroup, o
               <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition">
                 <Camera className="w-8 h-8 text-gray-400" />
               </div>
-              <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder={'\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435 \u0433\u0440\u0443\u043f\u043f\u044b'} autoFocus className="w-full px-4 py-3 bg-gray-100 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <p className="text-sm text-gray-500">{'\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0438:'} {selected.length}</p>
+              <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder={'Название группы'} autoFocus className="w-full px-4 py-3 bg-gray-100 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p className="text-sm text-gray-500">{'Участники:'} {selected.length}</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {selected.map(u => (
                   <span key={u} className="bg-gray-100 text-gray-700 text-xs px-3 py-1.5 rounded-full">{users[u]?.name || u}</span>
@@ -114,8 +114,8 @@ export default function CreateGroupDialog({ users, currentUser, onCreateGroup, o
               </div>
             </div>
             <div className="p-4 border-t flex gap-2">
-              <button onClick={() => setStep('members')} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">{'\u041d\u0430\u0437\u0430\u0434'}</button>
-              <button onClick={handleCreate} disabled={!groupName.trim()} className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">{'\u0421\u043e\u0437\u0434\u0430\u0442\u044c'}</button>
+              <button onClick={() => setStep('members')} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">{'Назад'}</button>
+              <button onClick={handleCreate} disabled={!groupName.trim()} className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium">{'Создать'}</button>
             </div>
           </>
         )}

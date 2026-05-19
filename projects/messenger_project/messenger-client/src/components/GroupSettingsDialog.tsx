@@ -52,7 +52,7 @@ export default function GroupSettingsDialog({ group, users, currentUser, onUpdat
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">{'\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0433\u0440\u0443\u043f\u043f\u044b'}</h3>
+          <h3 className="text-lg font-semibold">{'Настройки группы'}</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
         </div>
 
@@ -68,12 +68,12 @@ export default function GroupSettingsDialog({ group, users, currentUser, onUpdat
             ) : (
               <h3 className="text-xl font-semibold">{group.name}</h3>
             )}
-            <p className="text-sm text-gray-500">{group.members.length} {'\u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432'}</p>
+            <p className="text-sm text-gray-500">{group.members.length} {'участников'}</p>
           </div>
 
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold text-gray-900">{'\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0438'}</h4>
+              <h4 className="font-semibold text-gray-900">{'Участники'}</h4>
               {isAdmin && (
                 <button onClick={() => setShowAddMember(!showAddMember)} className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition">
                   <UserPlus className="w-4 h-4" />
@@ -85,11 +85,11 @@ export default function GroupSettingsDialog({ group, users, currentUser, onUpdat
               <div className="mb-3 bg-gray-50 rounded-lg p-3">
                 <div className="relative mb-2">
                   <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input type="text" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} placeholder={'\u041f\u043e\u0438\u0441\u043a...'} autoFocus className="w-full pl-10 pr-4 py-2 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" value={addSearch} onChange={(e) => setAddSearch(e.target.value)} placeholder={'Поиск...'} autoFocus className="w-full pl-10 pr-4 py-2 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="max-h-40 overflow-y-auto">
                   {nonMembers.length === 0 ? (
-                    <p className="text-center text-gray-400 text-sm py-2">{'\u041d\u0438\u043a\u043e\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e'}</p>
+                    <p className="text-center text-gray-400 text-sm py-2">{'Никого не найдено'}</p>
                   ) : nonMembers.map(u => (
                     <button key={u.username} onClick={() => { onAddMember(u.username); setShowAddMember(false); }} className="w-full p-2 flex items-center gap-2 hover:bg-white rounded-lg transition">
                       <div className="w-8 h-8 flex-shrink-0">{getAvatar(u)}</div>
@@ -109,19 +109,19 @@ export default function GroupSettingsDialog({ group, users, currentUser, onUpdat
                 <div key={username} className="flex items-center gap-3 py-2">
                   <div className="flex-shrink-0">{getAvatar(u)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{u.name} {username === currentUser.username ? '(\u0432\u044b)' : ''}</p>
+                    <p className="font-medium text-gray-900 truncate">{u.name} {username === currentUser.username ? '(вы)' : ''}</p>
                     <div className="flex items-center gap-1">
-                      {isMemberCreator && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">{'\u0421\u043e\u0437\u0434\u0430\u0442\u0435\u043b\u044c'}</span>}
-                      {isMemberAdmin && !isMemberCreator && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{'\u0410\u0434\u043c\u0438\u043d'}</span>}
+                      {isMemberCreator && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">{'Создатель'}</span>}
+                      {isMemberAdmin && !isMemberCreator && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{'Админ'}</span>}
                     </div>
                   </div>
                   {isAdmin && username !== currentUser.username && !isMemberCreator && (
                     <div className="flex items-center gap-1">
-                      <button onClick={() => onSetAdmin(username, !isMemberAdmin)} className="p-1.5 hover:bg-gray-100 rounded-lg" title={isMemberAdmin ? '\u0423\u0431\u0440\u0430\u0442\u044c \u0430\u0434\u043c\u0438\u043d\u0430' : '\u041d\u0430\u0437\u043d\u0430\u0447\u0438\u0442\u044c \u0430\u0434\u043c\u0438\u043d\u043e\u043c'}>
+                      <button onClick={() => onSetAdmin(username, !isMemberAdmin)} className="p-1.5 hover:bg-gray-100 rounded-lg" title={isMemberAdmin ? 'Убрать админа' : 'Назначить админом'}>
                         {isMemberAdmin ? <ShieldOff className="w-4 h-4 text-orange-500" /> : <Shield className="w-4 h-4 text-blue-500" />}
                       </button>
                       {(isCreator || (!isMemberAdmin)) && (
-                        <button onClick={() => onRemoveMember(username)} className="p-1.5 hover:bg-gray-100 rounded-lg" title={'\u0423\u0434\u0430\u043b\u0438\u0442\u044c'}>
+                        <button onClick={() => onRemoveMember(username)} className="p-1.5 hover:bg-gray-100 rounded-lg" title={'Удалить'}>
                           <UserMinus className="w-4 h-4 text-red-500" />
                         </button>
                       )}
@@ -135,7 +135,7 @@ export default function GroupSettingsDialog({ group, users, currentUser, onUpdat
 
         <div className="p-4 border-t">
           <button onClick={onLeaveGroup} className="w-full py-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 text-sm font-medium flex items-center justify-center gap-2">
-            <LogOut className="w-4 h-4" /> {'\u041f\u043e\u043a\u0438\u043d\u0443\u0442\u044c \u0433\u0440\u0443\u043f\u043f\u0443'}
+            <LogOut className="w-4 h-4" /> {'Покинуть группу'}
           </button>
         </div>
       </div>

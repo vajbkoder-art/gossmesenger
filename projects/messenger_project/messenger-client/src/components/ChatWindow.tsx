@@ -148,10 +148,10 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
     const bgClass = isInBubble ? 'bg-black/10' : 'bg-blue-50';
     const textClass = isInBubble ? 'text-inherit opacity-80' : 'text-gray-600';
     const nameClass = isInBubble ? 'text-inherit font-semibold' : 'text-blue-600 font-semibold';
-    const typeLabel = reply.type === 'image' ? '\ud83d\udcf7 \u0424\u043e\u0442\u043e' : reply.type === 'voice' ? '\ud83c\udfa4 \u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0435' : reply.type === 'video' ? '\ud83d\udcf9 \u0412\u0438\u0434\u0435\u043e' : reply.type === 'file' ? `\ud83d\udcce ${reply.filename || '\u0424\u0430\u0439\u043b'}` : reply.text;
+    const typeLabel = reply.type === 'image' ? '\ud83d\udcf7 Фото' : reply.type === 'voice' ? '\ud83c\udfa4 Голосовое' : reply.type === 'video' ? '\ud83d\udcf9 Видео' : reply.type === 'file' ? `\ud83d\udcce ${reply.filename || 'Файл'}` : reply.text;
     return (
       <div className={`${bgClass} rounded-lg px-3 py-1.5 mb-1 border-l-2 border-blue-400`}>
-        <p className={`text-xs ${nameClass}`}>{reply.senderName || (reply.sender === 'me' ? '\u0412\u044b' : chat.name)}</p>
+        <p className={`text-xs ${nameClass}`}>{reply.senderName || (reply.sender === 'me' ? 'Вы' : chat.name)}</p>
         <p className={`text-xs ${textClass} truncate`}>{typeLabel}</p>
       </div>
     );
@@ -177,12 +177,12 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
         <div className={`max-w-[75%] ${isMe ? 'bg-blue-500 text-white' : 'bg-white text-gray-900'} rounded-2xl px-4 py-2 shadow-sm relative`}>
           {msg.pinned && (
             <div className={`flex items-center gap-1 mb-1 ${isMe ? 'text-blue-200' : 'text-orange-500'}`}>
-              <Pin className="w-3 h-3" /><span className="text-[10px]">{'\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0435\u043d\u043e'}</span>
+              <Pin className="w-3 h-3" /><span className="text-[10px]">{'Закреплено'}</span>
             </div>
           )}
           {msg.forwarded && (
             <div className={`flex items-center gap-1 mb-1 ${isMe ? 'text-blue-200' : 'text-purple-500'}`}>
-              <ForwardIcon className="w-3 h-3" /><span className="text-[10px]">{'\u041f\u0435\u0440\u0435\u0441\u043b\u0430\u043d\u043e'}{msg.forwardedFrom ? ` \u043e\u0442 ${msg.forwardedFrom}` : ''}</span>
+              <ForwardIcon className="w-3 h-3" /><span className="text-[10px]">{'Переслано'}{msg.forwardedFrom ? ` от ${msg.forwardedFrom}` : ''}</span>
             </div>
           )}
           {msg.replyTo && renderReplyPreview(msg.replyTo, true)}
@@ -207,13 +207,13 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
           {msg.type === 'file' && msg.url && (
             <a href={`${API_URL}${msg.url}`} target="_blank" rel="noopener noreferrer" className={`flex items-center gap-2 ${isMe ? 'text-blue-100 hover:text-white' : 'text-blue-600 hover:text-blue-700'}`}>
               <FileText className="w-4 h-4" />
-              <span className="text-sm underline truncate">{msg.filename || '\u0424\u0430\u0439\u043b'}</span>
+              <span className="text-sm underline truncate">{msg.filename || 'Файл'}</span>
               {msg.size != null && <span className="text-xs opacity-70">{(msg.size / 1024).toFixed(0)} KB</span>}
             </a>
           )}
           {msg.text && <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>}
           <div className={`flex items-center gap-1 mt-0.5 ${isMe ? 'justify-end' : 'justify-start'}`}>
-            {msg.editedAt && <span className={`text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>{'\u0440\u0435\u0434.'}</span>}
+            {msg.editedAt && <span className={`text-[10px] ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>{'ред.'}</span>}
             <span className={`text-[11px] ${isMe ? 'text-blue-200' : 'text-gray-400'}`}>{msg.time}</span>
             {renderStatus(msg)}
           </div>
@@ -237,14 +237,14 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900 truncate">{chat.name}</h3>
           <p className="text-xs text-gray-500">
-            {isOnline ? '\u0432 \u0441\u0435\u0442\u0438' : peerUser?.lastActive
-              ? `\u0431\u044b\u043b(\u0430) ${new Date(peerUser.lastActive).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}`
-              : '\u043d\u0435 \u0432 \u0441\u0435\u0442\u0438'
+            {isOnline ? 'в сети' : peerUser?.lastActive
+              ? `был(а) ${new Date(peerUser.lastActive).toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}`
+              : 'не в сети'
             }
           </p>
         </div>
         {pinnedMessages.length > 0 && (
-          <button onClick={() => setShowPinned(!showPinned)} className="p-2 hover:bg-gray-100 rounded-lg transition relative" title={'\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0451\u043d\u043d\u044b\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f'}>
+          <button onClick={() => setShowPinned(!showPinned)} className="p-2 hover:bg-gray-100 rounded-lg transition relative" title={'Закреплённые сообщения'}>
             <Pin className="w-5 h-5 text-orange-500" />
             <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">{pinnedMessages.length}</span>
           </button>
@@ -254,12 +254,12 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
       {showPinned && pinnedMessages.length > 0 && (
         <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 max-h-32 overflow-y-auto">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-orange-700">{'\u0417\u0430\u043a\u0440\u0435\u043f\u043b\u0451\u043d\u043d\u044b\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f'}</span>
+            <span className="text-xs font-semibold text-orange-700">{'Закреплённые сообщения'}</span>
             <button onClick={() => setShowPinned(false)} className="p-0.5 hover:bg-orange-100 rounded"><X className="w-3 h-3 text-orange-500" /></button>
           </div>
           {pinnedMessages.map(m => (
             <div key={m.id} className="text-xs text-gray-700 py-1 border-b border-orange-100 last:border-0 truncate">
-              <span className="text-orange-600">{m.sender === 'me' ? '\u0412\u044b' : chat.name}:</span> {m.text || '\u{1F4CE} \u0424\u0430\u0439\u043b'}
+              <span className="text-orange-600">{m.sender === 'me' ? 'Вы' : chat.name}:</span> {m.text || '\u{1F4CE} Файл'}
             </div>
           ))}
         </div>
@@ -276,8 +276,8 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
           <div className="flex-1 min-w-0">
             <p className="text-xs text-blue-600 font-semibold flex items-center gap-1">
               {editingMessage
-                ? <><Pencil className="w-3 h-3" /> {'\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435'}</>
-                : <><ReplyIcon className="w-3 h-3" /> {replyTo?.senderName || '\u041e\u0442\u0432\u0435\u0442'}</>
+                ? <><Pencil className="w-3 h-3" /> {'Редактирование'}</>
+                : <><ReplyIcon className="w-3 h-3" /> {replyTo?.senderName || 'Ответ'}</>
               }
             </p>
             <p className="text-xs text-gray-500 truncate">{editingMessage ? editingMessage.text : replyTo?.text || ''}</p>
@@ -301,13 +301,13 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
                     <div className="fixed inset-0 z-10" onClick={() => setShowAttachMenu(false)} />
                     <div className="absolute bottom-12 left-0 z-20 bg-white rounded-xl shadow-xl border border-gray-200 py-1 min-w-[160px]">
                       <button onClick={() => imageInputRef.current?.click()} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700">
-                        <Image className="w-4 h-4 text-green-500" /> {'\u0424\u043e\u0442\u043e'}
+                        <Image className="w-4 h-4 text-green-500" /> {'Фото'}
                       </button>
                       <button onClick={() => videoInputRef.current?.click()} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700">
-                        <span className="text-blue-500 text-base">{'\ud83d\udcf9'}</span> {'\u0412\u0438\u0434\u0435\u043e'}
+                        <span className="text-blue-500 text-base">{'\ud83d\udcf9'}</span> {'Видео'}
                       </button>
                       <button onClick={() => fileInputRef.current?.click()} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 text-sm text-gray-700">
-                        <FileText className="w-4 h-4 text-purple-500" /> {'\u0424\u0430\u0439\u043b'}
+                        <FileText className="w-4 h-4 text-purple-500" /> {'Файл'}
                       </button>
                     </div>
                   </>
@@ -319,7 +319,7 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
               <input
                 ref={inputRef} type="text" value={input}
                 onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder={editingMessage ? '\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...' : '\u041d\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435...'}
+                placeholder={editingMessage ? 'Редактировать сообщение...' : 'Написать сообщение...'}
                 className="flex-1 px-4 py-2.5 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </>
@@ -331,7 +331,7 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
               <Send className="w-5 h-5" />
             </button>
           ) : (
-            <button onClick={() => setIsRecording(true)} className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full transition" title={'\u0413\u043e\u043b\u043e\u0441\u043e\u0432\u043e\u0435 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435'}>
+            <button onClick={() => setIsRecording(true)} className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full transition" title={'Голосовое сообщение'}>
               <Mic className="w-5 h-5" />
             </button>
           )}
@@ -355,16 +355,16 @@ export default function ChatWindow({ chat, users, currentUser, onSendMessage, on
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(null)} />
           <div className="relative bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold mb-2">{'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u0435?'}</h3>
-            <p className="text-sm text-gray-500 mb-4 truncate">&quot;{showDeleteConfirm.text || '\u041c\u0435\u0434\u0438\u0430'}&quot;</p>
+            <h3 className="text-lg font-semibold mb-2">{'Удалить сообщение?'}</h3>
+            <p className="text-sm text-gray-500 mb-4 truncate">&quot;{showDeleteConfirm.text || 'Медиа'}&quot;</p>
             <div className="flex flex-col gap-2">
               <button onClick={() => { onDeleteMessages?.([showDeleteConfirm.id], true); setShowDeleteConfirm(null); }} className="w-full py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium">
-                {'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0443 \u0432\u0441\u0435\u0445'}
+                {'Удалить у всех'}
               </button>
               <button onClick={() => { onDeleteMessages?.([showDeleteConfirm.id], false); setShowDeleteConfirm(null); }} className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
-                {'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0443 \u043c\u0435\u043d\u044f'}
+                {'Удалить у меня'}
               </button>
-              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-2.5 text-gray-500 text-sm">{'\u041e\u0442\u043c\u0435\u043d\u0430'}</button>
+              <button onClick={() => setShowDeleteConfirm(null)} className="w-full py-2.5 text-gray-500 text-sm">{'Отмена'}</button>
             </div>
           </div>
         </div>

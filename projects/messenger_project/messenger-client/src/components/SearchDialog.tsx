@@ -52,20 +52,20 @@ export default function SearchDialog({ chats, groups, onSelectChat, onSelectGrou
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
         <div className="flex items-center gap-3 p-4 border-b">
           <Search className="w-5 h-5 text-gray-400 flex-shrink-0" />
-          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={'\u041f\u043e\u0438\u0441\u043a \u043f\u043e \u0447\u0430\u0442\u0430\u043c \u0438 \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f\u043c...'} autoFocus className="flex-1 text-sm focus:outline-none" />
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={'Поиск по чатам и сообщениям...'} autoFocus className="flex-1 text-sm focus:outline-none" />
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5 text-gray-500" /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {!query.trim() ? (
-            <div className="p-8 text-center text-gray-400 text-sm">{'\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0437\u0430\u043f\u0440\u043e\u0441 \u0434\u043b\u044f \u043f\u043e\u0438\u0441\u043a\u0430'}</div>
+            <div className="p-8 text-center text-gray-400 text-sm">{'Введите запрос для поиска'}</div>
           ) : !hasResults ? (
-            <div className="p-8 text-center text-gray-400 text-sm">{'\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e'}</div>
+            <div className="p-8 text-center text-gray-400 text-sm">{'Ничего не найдено'}</div>
           ) : (
             <>
               {results.chats.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'\u0427\u0430\u0442\u044b'}</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'Чаты'}</div>
                   {results.chats.map(c => (
                     <button key={c.username} onClick={() => { onSelectChat(c.username); onClose(); }} className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition">
                       <MessageSquare className="w-5 h-5 text-blue-500 flex-shrink-0" />
@@ -79,13 +79,13 @@ export default function SearchDialog({ chats, groups, onSelectChat, onSelectGrou
               )}
               {results.groups.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'\u0413\u0440\u0443\u043f\u043f\u044b'}</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'Группы'}</div>
                   {results.groups.map(g => (
                     <button key={g.id} onClick={() => { onSelectGroup(g.id); onClose(); }} className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition">
                       <Users className="w-5 h-5 text-purple-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0 text-left">
                         <p className="font-medium text-gray-900 truncate">{g.name}</p>
-                        <p className="text-xs text-gray-500">{g.members.length} {'\u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432'}</p>
+                        <p className="text-xs text-gray-500">{g.members.length} {'участников'}</p>
                       </div>
                     </button>
                   ))}
@@ -93,7 +93,7 @@ export default function SearchDialog({ chats, groups, onSelectChat, onSelectGrou
               )}
               {results.messages.length > 0 && (
                 <div>
-                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'\u0421\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f'}</div>
+                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50">{'Сообщения'}</div>
                   {results.messages.map((m, i) => (
                     <button key={i} onClick={() => { m.isGroup && m.groupId ? onSelectGroup(m.groupId) : onSelectChat(m.chatUsername); onClose(); }} className="w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition">
                       <MessageSquare className="w-4 h-4 text-gray-400 flex-shrink-0" />

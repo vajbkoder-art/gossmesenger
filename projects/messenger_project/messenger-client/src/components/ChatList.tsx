@@ -64,8 +64,8 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
   const getGroupLastMessage = (g: GroupChat) => {
     if (!g.messages || g.messages.length === 0) return '';
     const last = g.messages[g.messages.length - 1];
-    const sender = last.senderUsername === currentUser.username ? '\u0412\u044b' : (users[last.senderUsername || '']?.name || last.senderUsername || '');
-    return `${sender}: ${last.text || '\u0424\u0430\u0439\u043b'}`;
+    const sender = last.senderUsername === currentUser.username ? 'Вы' : (users[last.senderUsername || '']?.name || last.senderUsername || '');
+    return `${sender}: ${last.text || 'Файл'}`;
   };
 
   const getGroupTime = (g: GroupChat) => {
@@ -80,12 +80,12 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
           <button onClick={onOpenSidebar} className="p-2 hover:bg-gray-100 rounded-lg transition">
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
-          <h2 className="text-lg font-semibold text-gray-900">\u0427\u0430\u0442\u044b</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Чаты</h2>
           <div className="flex items-center gap-1">
-            <button onClick={onOpenSearch} className="p-2 hover:bg-gray-100 rounded-lg transition" title="\u041f\u043e\u0438\u0441\u043a">
+            <button onClick={onOpenSearch} className="p-2 hover:bg-gray-100 rounded-lg transition" title="Поиск">
               <Search className="w-5 h-5 text-gray-600" />
             </button>
-            <button onClick={() => setShowNewChat(true)} className="p-2 hover:bg-gray-100 rounded-lg transition" title="\u041d\u043e\u0432\u044b\u0439 \u0447\u0430\u0442">
+            <button onClick={() => setShowNewChat(true)} className="p-2 hover:bg-gray-100 rounded-lg transition" title="Новый чат">
               <Plus className="w-5 h-5 text-gray-600" />
             </button>
           </div>
@@ -94,16 +94,16 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="\u041f\u043e\u0438\u0441\u043a..."
+            placeholder="Поиск..."
             className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
         </div>
         <div className="flex bg-gray-100 rounded-lg p-0.5">
           <button onClick={() => setTab('chats')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition ${tab === 'chats' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>
-            \u041b\u0438\u0447\u043d\u044b\u0435
+            Личные
           </button>
           <button onClick={() => setTab('groups')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition ${tab === 'groups' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>
-            \u0413\u0440\u0443\u043f\u043f\u044b ({groups.length})
+            Группы ({groups.length})
           </button>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
         {tab === 'chats' ? (
           filteredChats.length === 0 ? (
             <div className="p-8 text-center text-gray-400 text-sm">
-              {search ? '\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e' : '\u041d\u0435\u0442 \u0447\u0430\u0442\u043e\u0432'}
+              {search ? 'Ничего не найдено' : 'Нет чатов'}
             </div>
           ) : (
             filteredChats.map((chat) => (
@@ -131,7 +131,7 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
                     <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{formatTime(chat)}</span>
                   </div>
                   <div className="flex justify-between items-center mt-0.5">
-                    <span className="text-sm text-gray-500 truncate">{chat.lastMessage || '\u00A0'}</span>
+                    <span className="text-sm text-gray-500 truncate">{chat.lastMessage || ' '}</span>
                     {chat.unread > 0 && (
                       <span className="bg-blue-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 flex-shrink-0 ml-2">
                         {chat.unread}
@@ -148,12 +148,12 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
               <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
                 <Users className="w-5 h-5" />
               </div>
-              <span className="font-medium text-sm">\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0433\u0440\u0443\u043f\u043f\u0443</span>
+              <span className="font-medium text-sm">Создать группу</span>
             </button>
             {filteredGroups.length === 0 && !search ? (
-              <div className="p-8 text-center text-gray-400 text-sm">\u041d\u0435\u0442 \u0433\u0440\u0443\u043f\u043f</div>
+              <div className="p-8 text-center text-gray-400 text-sm">Нет групп</div>
             ) : filteredGroups.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-sm">\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e</div>
+              <div className="p-8 text-center text-gray-400 text-sm">Ничего не найдено</div>
             ) : (
               filteredGroups.map((g) => (
                 <button
@@ -170,7 +170,7 @@ export default function ChatList({ chats, groups, activeChat, activeGroup, users
                       <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{getGroupTime(g)}</span>
                     </div>
                     <div className="flex justify-between items-center mt-0.5">
-                      <span className="text-sm text-gray-500 truncate">{getGroupLastMessage(g) || `${g.members.length} \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u043e\u0432`}</span>
+                      <span className="text-sm text-gray-500 truncate">{getGroupLastMessage(g) || `${g.members.length} участников`}</span>
                     </div>
                   </div>
                 </button>

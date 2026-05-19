@@ -224,7 +224,7 @@ export default function ChatPage() {
         return {
           ...existing,
           messages: [...existing.messages, message],
-          lastMessage: text.trim() || attachment?.filename || '\u0424\u0430\u0439\u043b',
+          lastMessage: text.trim() || attachment?.filename || 'Файл',
           time: timeStr,
           timestamp: nowMs,
         };
@@ -236,7 +236,7 @@ export default function ChatPage() {
         avatar: recipientUser?.avatar || recipientUsername[0]?.toUpperCase() || '?',
         time: timeStr,
         timestamp: nowMs,
-        lastMessage: text.trim() || attachment?.filename || '\u0424\u0430\u0439\u043b',
+        lastMessage: text.trim() || attachment?.filename || 'Файл',
         unread: 0,
         status: 'offline',
         messages: [message],
@@ -251,7 +251,7 @@ export default function ChatPage() {
       avatar: user.avatar || user.username[0]?.toUpperCase() || '?',
       time: timeStr,
       timestamp: nowMs,
-      lastMessage: text.trim() || attachment?.filename || '\u0424\u0430\u0439\u043b',
+      lastMessage: text.trim() || attachment?.filename || 'Файл',
       unread: 1,
       status: 'online',
       messages: [recipientMessage],
@@ -537,8 +537,8 @@ export default function ChatPage() {
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50">
               <div className="text-center text-gray-400">
-                <p className="text-lg">\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0447\u0430\u0442</p>
-                <p className="text-sm mt-1">\u0438\u043b\u0438 \u043d\u0430\u0447\u043d\u0438\u0442\u0435 \u043d\u043e\u0432\u044b\u0439 \u0434\u0438\u0430\u043b\u043e\u0433</p>
+                <p className="text-lg">Выберите чат</p>
+                <p className="text-sm mt-1">или начните новый диалог</p>
               </div>
             </div>
           )}
